@@ -28,6 +28,7 @@ namespace VideoEncoder
             Duration = worker.GetVideoLength(FullPath);
             StringLength = (Length / 1024).ToString() + " kb";
             TimeDuratrion = new TimeSpan(0, 0, Duration);
+
         }
     }
 }

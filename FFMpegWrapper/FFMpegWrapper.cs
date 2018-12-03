@@ -26,6 +26,7 @@ namespace FFMpegWrapper
         private const string EncoderName = "ffmpeg.exe";
         private readonly string EncoderPath = Directory.GetCurrentDirectory().ToString() + "\\" + EncoderName;
         private Process CurrentProcess = null;
+        private Process GetInfoProcess = null;
 
         public FFMpegWorker() { }
 
@@ -90,12 +91,12 @@ namespace FFMpegWrapper
                 mediaRecord.Samplerate);
         }
 
-        private ProcessStartInfo SetupInfo(string args)
+        private ProcessStartInfo SetupInfo(string args, bool getInfoFlag = false)
         {
             return new ProcessStartInfo()
             {
                 FileName = EncoderPath,
-                RedirectStandardError = true, //break working
+                RedirectStandardError = getInfoFlag, //break working
                 //RedirectStandardOutput = true,
                 UseShellExecute = false,
                 CreateNoWindow = true,
@@ -129,14 +130,14 @@ namespace FFMpegWrapper
         {
             Regex regex = new Regex("Duration: (\\d{2}):(\\d{2}):(\\d{2})");
 
-            ProcessStartInfo info = SetupInfo($"-i {fullPath}"); //-hide_banner - loglevel info
+            ProcessStartInfo info = SetupInfo($"-i {fullPath}", true); //-hide_banner - loglevel info
 
             string data;
 
-            using (var process = Process.Start(info))
+            using (GetInfoProcess = Process.Start(info))
             {
-                process.WaitForExit();
-                using (var stream = process.StandardError)
+                GetInfoProcess.WaitForExit();
+                using (var stream = GetInfoProcess.StandardError)
                 {
                     data = stream.ReadToEnd();
                 }
@@ -152,19 +153,30 @@ namespace FFMpegWrapper
                     return hr * 60 * 60 + min * 60 + sec;
                 }
             }
-
             return 0;
         }
 
-        public bool CloseFFMpeg()
-        {
-            if (CurrentProcess != null)
-            {
-                CurrentProcess.Kill();
-                return true;
-            }
-            return false;
-        }
+        //public bool CloseFFMpeg()
+        //{
+        //    int counter = 0;
+        //    if (CurrentProcess != null)
+        //    {
+        //        CurrentProcess.Kill();
+        //        ++counter;
+        //    }
+        //    else
+        //        ++counter;
+        //    if (GetInfoProcess != null)
+        //    {
+        //        GetInfoProcess.Kill();
+        //        ++counter;
+        //    }
+        //    else
+        //        ++counter;
+
+
+        //    return counter == 2;
+        //}
 
     }
     

@@ -5,69 +5,128 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         Title="Video Encoder" Height="450" Width="800" ResizeMode="NoResize">
-    <Grid Margin="5, 5, 5, 5">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="0.4*"/>
-            <RowDefinition Height="0.4*"/>
-            <RowDefinition Height="0.2*"/>
-        </Grid.RowDefinitions>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="0.25*"/>
-            <ColumnDefinition Width="0.25*"/>
-            <ColumnDefinition Width="0.5*"/>
-        </Grid.ColumnDefinitions>
 
-        <WrapPanel Grid.Row="0" Grid.Column="0" Grid.RowSpan="2">
-            <Label Content="Resolution" Width="70"/>
-            <TextBox x:Name="WidthTextBox" Width="35" Height="20" PreviewTextInput="WidthTextBox_PreviewTextInput"/>
+    <Grid Margin="5">
+        <TabControl x:Name="MainTabControl">
+            <TabItem Header="General">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="0.4*"/>
+                        <RowDefinition Height="0.4*"/>
+                        <RowDefinition Height="0.2*"/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="0.25*"/>
+                        <ColumnDefinition Width="0.25*"/>
+                        <ColumnDefinition Width="0.5*"/>
+                    </Grid.ColumnDefinitions>
 
-            <Label Content="X" Width="20"/>
-            <TextBox x:Name="HeightTextBox" Width="35" Height="20" PreviewTextInput="HeightTextBox_PreviewTextInput"/>
+                    <WrapPanel Grid.Row="0" Grid.Column="0" Grid.RowSpan="2">
+                        <Label Content="Resolution" Width="70"/>
+                        <TextBox x:Name="WidthTextBox" Width="35" Height="20" PreviewTextInput="WidthTextBox_PreviewTextInput"/>
 
-            <Label Content="Channels" Width="70"/>
-            <ComboBox x:Name="ChannelsComboBox" Width="90"  Height="20" SelectedIndex="0"/>
+                        <Label Content="X" Width="20"/>
+                        <TextBox x:Name="HeightTextBox" Width="35" Height="20" PreviewTextInput="HeightTextBox_PreviewTextInput"/>
 
-            <Label Content="Bitrate" Width="70"/>
-            <ComboBox x:Name="BitrateComboBox" Width="90"  Height="20" SelectedIndex="0"/>
+                        <Label Content="Channels" Width="70"/>
+                        <ComboBox x:Name="ChannelsComboBox" Width="90"  Height="20" SelectedIndex="0"/>
 
-            <Label Content="Framerate" Width="70"/>
-            <ComboBox x:Name="FramerateСomboBox" Width="90"  Height="20" SelectedIndex="0"/>
+                        <Label Content="Bitrate" Width="70"/>
+                        <ComboBox x:Name="BitrateComboBox" Width="90"  Height="20" SelectedIndex="0"/>
 
-            <Label Content="Samplerate" Width="70"/>
-            <ComboBox x:Name="SamplerateComboBox" Width="90"  Height="20" SelectedIndex="0"/>
-            <Label>Destination Folder</Label>
-            <TextBox x:Name="TextBoxOutputPath" Width="155" Margin="5" IsReadOnly="True"/>
-            <Button x:Name="OpenDestinationFolderButton" Margin="5" Click="OpenDestinationFolderButton_Click">Open Folder</Button>
-        </WrapPanel>
+                        <Label Content="Framerate" Width="70"/>
+                        <ComboBox x:Name="FramerateСomboBox" Width="90"  Height="20" SelectedIndex="0"/>
 
-        <DockPanel x:Name="ItemsStackPanel" Grid.Column="2" Grid.RowSpan="2" Margin="20, 0, 20, 20">
-            <Label DockPanel.Dock="Top">Videos</Label>
-            <ListView x:Name="MainListView" >
-                <ListView.View>
-                    <GridView>
-                        <GridView.ColumnHeaderContainerStyle>
-                            <Style BasedOn="{StaticResource {x:Type GridViewColumnHeader}}" TargetType="{x:Type GridViewColumnHeader}">
-                                <Setter Property="IsHitTestVisible" Value="False"/>
-                            </Style>
-                        </GridView.ColumnHeaderContainerStyle>
+                        <Label Content="Samplerate" Width="70"/>
+                        <ComboBox x:Name="SamplerateComboBox" Width="90"  Height="20" SelectedIndex="0"/>
+
+                        <Label>Destination Folder</Label>
+                        <TextBox x:Name="TextBoxOutputPath" Width="155" Margin="5" IsReadOnly="True"/>
+                        <Button x:Name="OpenDestinationFolderButton" Margin="5" Click="OpenDestinationFolderButton_Click">Open Folder</Button>
+                    </WrapPanel>
+
+                    <DockPanel x:Name="ItemsStackPanel" Grid.Column="2" Grid.RowSpan="2" Margin="20, 0, 20, 20">
+                        <Label DockPanel.Dock="Top">Videos</Label>
+                        <ListView x:Name="MainListView" >
+                            <ListView.View>
+                                <GridView>
+                                    <GridView.ColumnHeaderContainerStyle>
+                                        <Style BasedOn="{StaticResource {x:Type GridViewColumnHeader}}" TargetType="{x:Type GridViewColumnHeader}">
+                                            <Setter Property="IsHitTestVisible" Value="False"/>
+                                        </Style>
+                                    </GridView.ColumnHeaderContainerStyle>
+
+                                    <GridViewColumn DisplayMemberBinding="{Binding Path=Title}" Header="Title" Width="140"/>
+                                    <GridViewColumn DisplayMemberBinding="{Binding Path=TimeDuratrion}" Header="Duration" Width="105"/>
+                                    <GridViewColumn DisplayMemberBinding="{Binding Path=StringLength}" Header="Length" Width="100"/>
+                                </GridView>
+                            </ListView.View>
+                        </ListView>
+                    </DockPanel>
+
+                    <StackPanel Grid.Row="2" Grid.Column="2" Margin="20, 0, 20, 0">
+                        <StackPanel Orientation="Horizontal">
+                            <Button Content="Open Files" Width="105" Margin="5" Click="ButtonOpenFilesClick"/>
+                            <Button Content="Open Folder" Width="105" Margin="5"/>
+                            <Button Content="Encode" Width="105" Margin="5" Click="ButtonEncodeVideosAsyncClicked"/>
+                        </StackPanel>
+                        <Separator Height="15" Visibility="Hidden"/>
+                        <ProgressBar x:Name="UploadProgressBar" Height="20"/>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+            <TabItem Header="Preview">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="0.5*"/>
+                        <ColumnDefinition Width="0.5*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="0.4*"/>
+                        <RowDefinition Height="0.35*"/>
+                        <RowDefinition Height="0.25*"/>
+                    </Grid.RowDefinitions>
+
+                    <DockPanel Grid.Column="0" Grid.Row="0" Grid.RowSpan="2" Margin="5">
+                        <MediaElement x:Name="PreviewMediaElement" LoadedBehavior="Manual" />
+                    </DockPanel>
+                    <StackPanel Grid.Row="3" Margin="5">
+                        <Slider x:Name="PositionSlider" IsSelectionRangeEnabled="True"/>
+                        <DockPanel>
+                            <Label x:Name="LabelStart" Content="00:00:00"/>
+                            <Separator Width="265" Visibility="Hidden"/>
+                            <Label x:Name="LabelStop" Content="00:00:00"/>
+                        </DockPanel>
+                        <StackPanel Orientation="Horizontal" Margin="10">
+                            <Button x:Name="PlayButton" Content="Play" Width="105" Margin="5" Click="PlayButton_Click"/>
+                            <Button x:Name="PauseButton" Content="Pause" Width="105" Margin="5" Click="PauseButton_Click" />
+                            <Button x:Name="StopButton" Content="Stop" Width="105" Margin="5" Click="StopButton_Click"/>
+                        </StackPanel>
                         
-                        <GridViewColumn DisplayMemberBinding="{Binding Path=Title}" Header="Title" Width="140"/>
-                        <GridViewColumn DisplayMemberBinding="{Binding Path=TimeDuratrion}" Header="Duration" Width="105"/>
-                        <GridViewColumn DisplayMemberBinding="{Binding Path=StringLength}" Header="Length" Width="105"/>
-                    </GridView>
-                </ListView.View>
-            </ListView>
 
-        </DockPanel>
-        <StackPanel Grid.Row="2" Grid.Column="2" Margin="20, 0, 20, 0">
-            <StackPanel Orientation="Horizontal">
-                <Button Content="Open Files" Width="105" Margin="5" Click="ButtonOpenFilesClick"/>
-                <Button Content="Open Folder" Width="105" Margin="5"/>
-                <Button Content="Encode" Width="105" Margin="5" Click="ButtonEncodeVideosClicked"/>
-            </StackPanel>
-            <Separator Height="15" Visibility="Hidden"/>
-            <ProgressBar x:Name="UploadProgressBar" Height="20"/>
-        </StackPanel>
+                    </StackPanel>
 
+                    <DockPanel x:Name="PreviewItemsStackPanel" Grid.Column="2" Grid.RowSpan="2" Margin="20, 0, 20, 20">
+                        <Label DockPanel.Dock="Top">Videos</Label>
+                        <ListView x:Name="PreviewListView" >
+                            <ListView.View>
+                                <GridView>
+                                    <GridView.ColumnHeaderContainerStyle>
+                                        <Style BasedOn="{StaticResource {x:Type GridViewColumnHeader}}" TargetType="{x:Type GridViewColumnHeader}">
+                                            <Setter Property="IsHitTestVisible" Value="False"/>
+                                        </Style>
+                                    </GridView.ColumnHeaderContainerStyle>
+
+                                    <GridViewColumn DisplayMemberBinding="{Binding Path=Title}" Header="Title" Width="140"/>
+                                    <GridViewColumn DisplayMemberBinding="{Binding Path=TimeDuratrion}" Header="Duration" Width="105"/>
+                                    <GridViewColumn DisplayMemberBinding="{Binding Path=StringLength}" Header="Length" Width="100"/>
+                                </GridView>
+                            </ListView.View>
+                        </ListView>
+                    </DockPanel>
+                   
+                </Grid>
+            </TabItem>
+        </TabControl>
     </Grid>
 </Window>
