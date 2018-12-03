@@ -73,7 +73,7 @@ namespace FFMpegWrapper
             }
             catch
             {
-               return "16:9";
+               return "5:4";
             }
         }
 

@@ -17,7 +17,7 @@
             <ColumnDefinition Width="0.5*"/>
         </Grid.ColumnDefinitions>
 
-        <WrapPanel Grid.Row="0" Grid.Column="0" >
+        <WrapPanel Grid.Row="0" Grid.Column="0" Grid.RowSpan="2">
             <Label Content="Resolution" Width="70"/>
             <TextBox x:Name="WidthTextBox" Width="35" Height="20" PreviewTextInput="WidthTextBox_PreviewTextInput"/>
 
@@ -35,7 +35,9 @@
 
             <Label Content="Samplerate" Width="70"/>
             <ComboBox x:Name="SamplerateComboBox" Width="90"  Height="20" SelectedIndex="0"/>
-            <TextBox x:Name="VideoTitleTextBox" Width="155" Margin="5"/>
+            <Label>Destination Folder</Label>
+            <TextBox x:Name="TextBoxOutputPath" Width="155" Margin="5" IsReadOnly="True"/>
+            <Button x:Name="OpenDestinationFolderButton" Margin="5" Click="OpenDestinationFolderButton_Click">Open Folder</Button>
         </WrapPanel>
 
         <DockPanel x:Name="ItemsStackPanel" Grid.Column="2" Grid.RowSpan="2" Margin="20, 0, 20, 20">

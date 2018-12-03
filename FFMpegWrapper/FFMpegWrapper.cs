@@ -25,6 +25,7 @@ namespace FFMpegWrapper
         private const string EncodeArgsFormat = "-y -i {0} -b {2} -r {3} -vf scale={4}x{5},setsar=1:1,setdar={6} -ac {7} -ar {8} {1}";
         private const string EncoderName = "ffmpeg.exe";
         private readonly string EncoderPath = Directory.GetCurrentDirectory().ToString() + "\\" + EncoderName;
+        private Process CurrentProcess = null;
 
         public FFMpegWorker() { }
 
@@ -35,11 +36,11 @@ namespace FFMpegWrapper
             {
                 ProcessStartInfo info = SetupInfo(GetArgs(mediaRecords));
 
-                using (var process = Process.Start(info))
+                using (CurrentProcess = Process.Start(info))
                 {
-                    process.WaitForExit();
+                    CurrentProcess.WaitForExit();
 
-                    int code = process.ExitCode;
+                    int code = CurrentProcess.ExitCode;
 
                     if (code == 0)
                     {
@@ -57,12 +58,12 @@ namespace FFMpegWrapper
         {
             ProcessStartInfo info = SetupInfo(GetArgs(mediaRecords));
 
-            using (var process = Process.Start(info))
+            using (CurrentProcess = Process.Start(info))
             {
-                process.EnableRaisingEvents = true;
-                process.WaitForExit();
+                CurrentProcess.EnableRaisingEvents = true;
+                CurrentProcess.WaitForExit();
 
-                int code = process.ExitCode;
+                int code = CurrentProcess.ExitCode;
 
                 if (code == 0)
                 {
@@ -94,8 +95,8 @@ namespace FFMpegWrapper
             return new ProcessStartInfo()
             {
                 FileName = EncoderPath,
-                //RedirectStandardError = true, //break working
-                RedirectStandardOutput = true,
+                RedirectStandardError = true, //break working
+                //RedirectStandardOutput = true,
                 UseShellExecute = false,
                 CreateNoWindow = true,
                 Arguments = args,
@@ -113,6 +114,7 @@ namespace FFMpegWrapper
                     await writer.WriteAsync(Message);
             }
         }
+
         private static void LogOutput(StreamReader stream)
         {
             using (StreamReader streamReader = stream)
@@ -122,6 +124,7 @@ namespace FFMpegWrapper
                     writer.Write(Message);
             }
         }
+
         public int GetVideoLength(string fullPath)
         {
             Regex regex = new Regex("Duration: (\\d{2}):(\\d{2}):(\\d{2})");
@@ -133,7 +136,7 @@ namespace FFMpegWrapper
             using (var process = Process.Start(info))
             {
                 process.WaitForExit();
-                using (var stream = process.StandardOutput)
+                using (var stream = process.StandardError)
                 {
                     data = stream.ReadToEnd();
                 }
@@ -152,8 +155,19 @@ namespace FFMpegWrapper
 
             return 0;
         }
-    }
 
+        public bool CloseFFMpeg()
+        {
+            if (CurrentProcess != null)
+            {
+                CurrentProcess.Kill();
+                return true;
+            }
+            return false;
+        }
+
+    }
+    
 }
 
 
