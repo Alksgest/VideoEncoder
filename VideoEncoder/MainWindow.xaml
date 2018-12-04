@@ -44,7 +44,7 @@
                         <Label>Destination Folder</Label>
                         <TextBox x:Name="TextBoxOutputPath" Width="155" Margin="5" IsReadOnly="True"/>
                         <Button x:Name="OpenDestinationFolderButton" Margin="5" Click="OpenDestinationFolderButton_Click">Open Folder</Button>
-                      
+
                     </WrapPanel>
 
                     <DockPanel x:Name="ItemsStackPanel" Grid.Column="2" Grid.RowSpan="2" Margin="20, 0, 20, 20">
@@ -80,8 +80,9 @@
             <TabItem Header="Preview">
                 <Grid>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="0.5*"/>
-                        <ColumnDefinition Width="0.5*"/>
+                        <ColumnDefinition Width="126*"/>
+                        <ColumnDefinition Width="263*"/>
+                        <ColumnDefinition Width="389*"/>
                     </Grid.ColumnDefinitions>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="0.4*"/>
@@ -89,10 +90,10 @@
                         <RowDefinition Height="0.25*"/>
                     </Grid.RowDefinitions>
 
-                    <DockPanel Grid.Column="0" Grid.Row="0" Grid.RowSpan="2" Margin="5">
+                    <DockPanel Grid.Column="0" Grid.Row="0" Grid.RowSpan="2" Margin="5" Grid.ColumnSpan="2">
                         <MediaElement x:Name="PreviewMediaElement" LoadedBehavior="Manual" />
                     </DockPanel>
-                    <StackPanel Grid.Row="3" Margin="5">
+                    <StackPanel Grid.Row="2" Margin="5" Grid.ColumnSpan="2">
                         <Slider x:Name="PositionSlider" IsSelectionRangeEnabled="True"/>
                         <DockPanel>
                             <Label x:Name="LabelStart" Content="00:00:00"/>
@@ -104,7 +105,7 @@
                             <Button x:Name="PauseButton" Content="Pause" Width="105" Margin="5" Click="PauseButton_Click" />
                             <Button x:Name="StopButton" Content="Stop" Width="105" Margin="5" Click="StopButton_Click"/>
                         </StackPanel>
-                        
+
 
                     </StackPanel>
 
@@ -118,7 +119,7 @@
                                             <Setter Property="IsHitTestVisible" Value="False"/>
                                         </Style>
                                     </GridView.ColumnHeaderContainerStyle>
-                                    
+
                                     <GridViewColumn DisplayMemberBinding="{Binding Path=Title}" Header="Title" Width="140"/>
                                     <GridViewColumn DisplayMemberBinding="{Binding Path=TimeDuratrion}" Header="Duration" Width="105"/>
                                     <GridViewColumn DisplayMemberBinding="{Binding Path=StringLength}" Header="Length" Width="100"/>
@@ -128,7 +129,7 @@
                     </DockPanel>
                 </Grid>
             </TabItem>
-            
+
             <TabItem Header="Join menu">
                 <Grid>
                     <Grid.ColumnDefinitions>
@@ -142,7 +143,7 @@
                     </Grid.RowDefinitions>
 
                     <ListBox x:Name="ListBoxJoin" ScrollViewer.HorizontalScrollBarVisibility="Disabled" 
-                        Grid.Row="0" Grid.Column="0" Grid.RowSpan="2"
+                        Grid.Row="0" Grid.Column="0" Grid.RowSpan="2" Margin="5"
                              >
                         <ListBox.ItemTemplate>
                             <DataTemplate>
@@ -159,6 +160,7 @@
                             </ItemsPanelTemplate>
                         </ListBox.ItemsPanel>
                     </ListBox>
+                    
                     <StackPanel Grid.Column="0" Grid.Row="2" Margin="5" Orientation="Horizontal">
                         <GridSplitter Width="20" Visibility="Hidden"/>
                         <Button x:Name="ButtonMoveFront" Content="Move front selected" Width="160" Margin="5" Height="30" Click="ButtonMoveFront_Click"/>
@@ -166,22 +168,24 @@
 
                     </StackPanel>
 
-                    <DockPanel Grid.Column="1" Grid.RowSpan="2">
+                    <DockPanel Grid.Column="1" Grid.RowSpan="2" Margin="5">
                         <Label DockPanel.Dock="Top">Settings</Label>
                         <WrapPanel Margin="10" >
                             <WrapPanel Orientation="Horizontal" Margin="5">
-                                <Button x:Name="ButtonJoinAll" Content="Join" Width="100" Click="ButtonJoinAll_Click" Margin="5"/>
-                                <ComboBox Margin="5" Width="100"/>
+                                <CheckBox Content="Encode all files"/>
+                                <Button x:Name="ButtonJoin" Content="Join" Width="100" Click="ButtonJoin_Click" Margin="5"/>
+                                <ComboBox x:Name="ComboBoxJoinState" Margin="5" Width="100"/>
+
                             </WrapPanel>
                             <WrapPanel Orientation="Horizontal" Margin="5">
-                                <TextBox Width="200" Margin="5" IsReadOnly="True"/>
-                                <Button Content="Open Folder" Width="100" Margin="5"/>
+                                <TextBox x:Name="TextBoxOutputJoinPath" Width="200" Margin="5" IsReadOnly="True"/>
+                                <Button Content="OpenFolder" Width="100" Margin="5" Click="ButtonOpenDestinationFolder_Click"/>
                             </WrapPanel>
                         </WrapPanel>
                     </DockPanel>
                 </Grid>
             </TabItem>
-            
+
         </TabControl>
     </Grid>
 </Window>

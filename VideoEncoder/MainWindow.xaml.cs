@@ -76,7 +76,7 @@ namespace VideoEncoder
 
         private async void ButtonEncodeVideosAsyncClicked(object sender, RoutedEventArgs e) => await EncodeVideosAsync();
 
-        private void OpenDestinationFolderButton_Click(object sender, RoutedEventArgs e) => OpenDestinationFolder();
+        private void OpenDestinationFolderButton_Click(object sender, RoutedEventArgs e) => OpenDestinationFolder(TextBoxOutputPath);
 
         private void PlayButton_Click(object sender, RoutedEventArgs e) => StartPlaying();
         private void StopButton_Click(object sender, RoutedEventArgs e) => StopPlaying();
@@ -207,13 +207,13 @@ namespace VideoEncoder
             TextBoxOutputPath.Text = Properties.Settings.Default.OutputPath;
         }
 
-        private void OpenDestinationFolder()
+        private void OpenDestinationFolder(TextBox txt)
         {
             using (var dialog = new System.Windows.Forms.FolderBrowserDialog())
             {
                 if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
                 {
-                    TextBoxOutputPath.Text = dialog.SelectedPath;
+                    txt.Text = dialog.SelectedPath;
                 }
             }
         }
@@ -344,17 +344,17 @@ namespace VideoEncoder
            });
         }
 
-        private async void ButtonJoinAll_Click(object sender, RoutedEventArgs e)
+        private async void ButtonJoin_Click(object sender, RoutedEventArgs e)
         {
             if (MainListView.Items.Count == 0)
                 return;
 
             var mediaRecordsList = new List<MediaRecords>();
 
-            foreach(VideoRepresenter videos in MainListView.Items)
+            foreach(VideoRepresenter videos in ListBoxJoin.Items)
                 mediaRecordsList.Add(GetRecords(videos.FullPath));
 
-            bool result = await FFMpegWorker.JoinVideosAsync(mediaRecordsList);
+            bool result = await FFMpegWorker.JoinVideosAsync(mediaRecordsList, TextBoxOutputJoinPath.Text + "\\joined.mp4");
         }
 
 
@@ -391,5 +391,8 @@ namespace VideoEncoder
                 ListBoxJoin.Focus();
             }
         }
+
+        private void ButtonOpenDestinationFolder_Click(object sender, RoutedEventArgs e) => OpenDestinationFolder(TextBoxOutputJoinPath);
+
     }
 }

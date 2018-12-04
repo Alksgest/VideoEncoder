@@ -35,11 +35,11 @@ namespace FFMpegWrapper
         }
 
 
-        public Task<bool> JoinVideosAsync(List<MediaRecords> files)
+        public Task<bool> JoinVideosAsync(List<MediaRecords> files, string outFile)
         {
             return Task.Run(() =>
             {
-                return JoinVideosHelper(files);
+                return JoinVideosHelper(files, outFile);
             });
         }
 
@@ -73,7 +73,7 @@ namespace FFMpegWrapper
                 return null;
         }
 
-        private bool JoinVideosHelper(List<MediaRecords> files)
+        private bool JoinVideosHelper(List<MediaRecords> files, string outFile)
         {
 
             if (files == null)
@@ -85,7 +85,7 @@ namespace FFMpegWrapper
                 args += "-i " + "\"" + file.InPath + "\"" + " ";
             }
             args += "-filter_complex" + " " + $"\"[0:0] [0:1] [1:0] [1:1] concat=n={files.Count}:v=1:a=1 [v] [a]\"" + " " + "-map" + " " + "\"[v]\"" + " " + "-map" + " " + "\"[a]\"";
-            args += " " + @"D:\ffmpeg_test\xxx\joined_videos.mp4";
+            args += " " + outFile;
 
             ProcessStartInfo info = SetupInfo(args);
 
