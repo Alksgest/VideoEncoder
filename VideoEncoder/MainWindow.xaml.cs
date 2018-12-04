@@ -324,6 +324,9 @@ namespace VideoEncoder
                 {
                     MainListView.Items.Add(new VideoRepresenter(file));
                     PreviewListView.Items.Add(new VideoRepresenter(file));
+                    //LittleImagesWrapPanel.Items.Add(new VideoRepresenter(file));
+                    ListBoxJoin.Items.Add(new VideoRepresenter(file));
+                  
                 }
             }
         }

@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:VideoEncoder"
         mc:Ignorable="d"
         Title="Video Encoder" Height="450" Width="800" ResizeMode="NoResize">
 
@@ -117,7 +118,7 @@
                                             <Setter Property="IsHitTestVisible" Value="False"/>
                                         </Style>
                                     </GridView.ColumnHeaderContainerStyle>
-
+                                    
                                     <GridViewColumn DisplayMemberBinding="{Binding Path=Title}" Header="Title" Width="140"/>
                                     <GridViewColumn DisplayMemberBinding="{Binding Path=TimeDuratrion}" Header="Duration" Width="105"/>
                                     <GridViewColumn DisplayMemberBinding="{Binding Path=StringLength}" Header="Length" Width="100"/>
@@ -125,9 +126,37 @@
                             </ListView.View>
                         </ListView>
                     </DockPanel>
-                   
                 </Grid>
             </TabItem>
+            
+            <TabItem Header="Join menu">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition/>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
+
+                    <ListBox x:Name="ListBoxJoin" ScrollViewer.HorizontalScrollBarVisibility="Disabled" >
+                        
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Margin="5">
+                                    <ContentControl Width="32" Height="32"  Content="{Binding Path=Icon}"/>
+                                    <TextBlock Text="{Binding Path=Title}"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                        
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel/>
+                            </ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
+                    </ListBox>
+
+                </Grid>
+            </TabItem>
+            
         </TabControl>
     </Grid>
 </Window>
