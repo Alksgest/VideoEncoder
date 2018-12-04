@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
+using System.Windows.Media.Imaging;
 
 namespace FFMpegWrapper
 {
@@ -19,13 +20,19 @@ namespace FFMpegWrapper
             {7} - chanels
             {8} - samplerate
         */
-        private const string EncodeArgsFormat = "-y -i {0} -b {2} -r {3} -vf scale={4}x{5},setsar=1:1,setdar={6} -ac {7} -ar {8} {1}";
+        private const string EncodeArgsFormat = "-y -i \"{0}\" -b {2} -r {3} -vf scale={4}x{5},setsar=1:1,setdar={6} -ac {7} -ar {8} {1}";
+        private const string GetFrameFormat = "-y -i \"{0}\" -vframes 1 {1}";
+        private readonly string FramesPath = Directory.GetCurrentDirectory().ToString() + "\\Frames\\"; 
         private const string EncoderName = "ffmpeg.exe";
         private readonly string EncoderPath = Directory.GetCurrentDirectory().ToString() + "\\" + EncoderName;
         private Process CurrentProcess = null;
         private Process GetInfoProcess = null;
 
-        public FFMpegWorker() { }
+        public FFMpegWorker()
+        {
+            if (!Directory.Exists(FramesPath))
+                Directory.CreateDirectory(FramesPath);                
+        }
 
 
         public Task<bool> JoinVideosAsync(List<MediaRecords> files)
@@ -34,6 +41,36 @@ namespace FFMpegWrapper
             {
                 return JoinVideosHelper(files);
             });
+        }
+
+        public Task<string> GetFrameAsync(string path)
+        {
+            return Task.Run(() =>
+           {
+               return GetFrame(path);
+           });
+        }
+
+        public string GetFrame(string path)
+        {
+            string fileName = GetNameOfFile(new FileInfo(path));
+            string filePathForFFMpeg = "\"" + FramesPath + fileName + "_first_frame" + ".jpg" + "\"";
+            string filePath = FramesPath + fileName + "_first_frame" + ".jpg";
+            string args = String.Format(GetFrameFormat, path, filePathForFFMpeg);
+
+            int exitCode = -1;
+            using (CurrentProcess = Process.Start(SetupInfo(args)))
+            {
+                CurrentProcess.WaitForExit();
+                exitCode = CurrentProcess.ExitCode;
+            }
+
+            if (exitCode == 0)
+            {
+                return filePath;
+            }
+            else
+                return null;
         }
 
         private bool JoinVideosHelper(List<MediaRecords> files)
@@ -45,7 +82,7 @@ namespace FFMpegWrapper
             string args = "-y ";
             foreach (var file in files)
             {
-                args += "-i " + file.InPath + " ";
+                args += "-i " + "\"" + file.InPath + "\"" + " ";
             }
             args += "-filter_complex" + " " + $"\"[0:0] [0:1] [1:0] [1:1] concat=n={files.Count}:v=1:a=1 [v] [a]\"" + " " + "-map" + " " + "\"[v]\"" + " " + "-map" + " " + "\"[a]\"";
             args += " " + @"D:\ffmpeg_test\xxx\joined_videos.mp4";

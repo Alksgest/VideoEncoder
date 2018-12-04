@@ -141,7 +141,7 @@
                         <ListBox.ItemTemplate>
                             <DataTemplate>
                                 <StackPanel Margin="5">
-                                    <ContentControl Width="32" Height="32"  Content="{Binding Path=Icon}"/>
+                                    <Image Width="64" Height="64"  Source="{Binding Path=FirstFrame}"/>
                                     <TextBlock Text="{Binding Path=Title}"/>
                                 </StackPanel>
                             </DataTemplate>

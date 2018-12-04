@@ -4,12 +4,13 @@ using FFMpegWrapper;
 using System.Windows.Media.Imaging;
 using System.Drawing.Imaging;
 using System.Windows.Controls;
+using System.Threading.Tasks;
 
 namespace VideoEncoder
 {
     public class VideoRepresenter
     {
-        private FFMpegWorker worker = new FFMpegWorker();
+        private FFMpegWorker worker;
 
         public string Title { get; }
         public string FullPath { get; }
@@ -17,10 +18,11 @@ namespace VideoEncoder
         public int Duration { get; }
         public string StringLength { get; }
         public TimeSpan TimeDuratrion { get; }
-        public Image Icon { get; }
+        public string FirstFrame { get; private set; }
 
         public VideoRepresenter(string fullPath)
         {
+            worker = new FFMpegWorker();
             FileInfo info = new FileInfo(fullPath);
             Title = info.Name;
             FullPath = info.FullName;
@@ -29,20 +31,18 @@ namespace VideoEncoder
             StringLength = (Length / 1024).ToString() + " kb";
             TimeDuratrion = new TimeSpan(0, 0, Duration);
 
-            Icon = new Image
+        }
+        public Task GetFirstFrameAsync()
+        {
+            return Task.Run(async () =>
             {
-                Source = BitmapToImageSource(ExtractIcon(FullPath))
-            };
+                FirstFrame = await worker.GetFrameAsync(FullPath);
+            });
         }
 
-        private System.Drawing.Bitmap ExtractIcon(string path)
+        public void GetFirstFrame()
         {
-            System.Drawing.Bitmap bmp;
-            using (System.Drawing.Icon i = System.Drawing.Icon.ExtractAssociatedIcon(path))
-            {
-                bmp = i.ToBitmap();
-            }          
-            return bmp;
+            FirstFrame = worker.GetFrame(FullPath);
         }
 
         BitmapImage BitmapToImageSource(System.Drawing.Bitmap bitmap)

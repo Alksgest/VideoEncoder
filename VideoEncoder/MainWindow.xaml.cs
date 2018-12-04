@@ -72,7 +72,7 @@ namespace VideoEncoder
             if (!Char.IsDigit(e.Text, 0) || (sender as TextBox).Text.Length >= 4) e.Handled = true;
         }
 
-        private void ButtonOpenFilesClick(object sender, RoutedEventArgs e) => OpenFiles();
+        private void ButtonOpenFilesClick(object sender, RoutedEventArgs e) => OpenFilesAsync();
 
         private async void ButtonEncodeVideosAsyncClicked(object sender, RoutedEventArgs e) => await EncodeVideosAsync();
 
@@ -310,7 +310,7 @@ namespace VideoEncoder
             foreach (var s in Defines.FramerateList)
                 FramerateСomboBox.Items.Add(s);
         }
-        private void OpenFiles()
+        private void OpenFilesAsync()
         {
             OpenFileDialog dialog = new OpenFileDialog
             {
@@ -320,13 +320,15 @@ namespace VideoEncoder
             if (dialog.ShowDialog() == true)
             {
                 var files = dialog.FileNames;
+                
                 foreach (var file in files)
-                {
-                    MainListView.Items.Add(new VideoRepresenter(file));
-                    PreviewListView.Items.Add(new VideoRepresenter(file));
-                    //LittleImagesWrapPanel.Items.Add(new VideoRepresenter(file));
-                    ListBoxJoin.Items.Add(new VideoRepresenter(file));
-                  
+                {                   
+                    var vr = new VideoRepresenter(file);
+                    vr.GetFirstFrame();
+
+                    MainListView.Items.Add(vr);
+                    PreviewListView.Items.Add(vr);
+                    ListBoxJoin.Items.Add(vr);               
                 }
             }
         }
