@@ -105,6 +105,8 @@ namespace VideoEncoder
             PositionSlider.Maximum = PreviewMediaElement.NaturalDuration.TimeSpan.TotalSeconds;
             LabelStop.Content = PreviewMediaElement.NaturalDuration.TimeSpan.ToString(@"hh\:mm\:ss");
         }
+        private void ButtonMoveFront_Click(object sender, RoutedEventArgs e) => SwapItem(1);
+        private void ButtonMoveBack_Click(object sender, RoutedEventArgs e) => SwapItem(-1);
 
         private void StartPlaying()
         {
@@ -158,6 +160,7 @@ namespace VideoEncoder
         {
             if (State == PlayerState.Pause)
             {
+                Timer.Start();
                 StartPlaying();
                 State = PlayerState.Play;
             }
@@ -310,7 +313,7 @@ namespace VideoEncoder
             foreach (var s in Defines.FramerateList)
                 FramerateСomboBox.Items.Add(s);
         }
-        private void OpenFilesAsync()
+        private async void OpenFilesAsync()
         {
             OpenFileDialog dialog = new OpenFileDialog
             {
@@ -320,17 +323,25 @@ namespace VideoEncoder
             if (dialog.ShowDialog() == true)
             {
                 var files = dialog.FileNames;
-                
-                foreach (var file in files)
-                {                   
-                    var vr = new VideoRepresenter(file);
-                    vr.GetFirstFrame();
 
-                    MainListView.Items.Add(vr);
-                    PreviewListView.Items.Add(vr);
-                    ListBoxJoin.Items.Add(vr);               
-                }
+                await SetDataToContainers(files);
             }
+        }
+
+        private Task SetDataToContainers(string[] files)
+        {
+            return Task.Run(() =>
+           {
+               foreach (var file in files)
+               {
+                   var vr = new VideoRepresenter(file);
+                   vr.GetFirstFrame();
+
+                   MainListView.Dispatcher.Invoke(() => MainListView.Items.Add(vr), DispatcherPriority.Background);
+                   PreviewListView.Dispatcher.Invoke(() => PreviewListView.Items.Add(vr), DispatcherPriority.Background);
+                   ListBoxJoin.Dispatcher.Invoke(() => ListBoxJoin.Items.Add(vr), DispatcherPriority.Background);
+               }
+           });
         }
 
         private async void ButtonJoinAll_Click(object sender, RoutedEventArgs e)
@@ -344,6 +355,41 @@ namespace VideoEncoder
                 mediaRecordsList.Add(GetRecords(videos.FullPath));
 
             bool result = await FFMpegWorker.JoinVideosAsync(mediaRecordsList);
+        }
+
+
+
+        private void SwapItem(int direction)
+        {
+            var selectedIndex = ListBoxJoin.SelectedIndex;
+
+            if (selectedIndex == -1)
+                return;
+
+            if (selectedIndex + direction >= ListBoxJoin.Items.Count)
+            {
+                var item = ListBoxJoin.SelectedItem;
+                ListBoxJoin.Items.RemoveAt(selectedIndex);
+                ListBoxJoin.Items.Insert(0, item);
+                ListBoxJoin.SelectedIndex = 0;
+                ListBoxJoin.Focus();
+            }
+            else if (selectedIndex + direction < 0)
+            {
+                var item = ListBoxJoin.SelectedItem;
+                ListBoxJoin.Items.RemoveAt(selectedIndex);
+                ListBoxJoin.Items.Insert(ListBoxJoin.Items.Count, item);
+                ListBoxJoin.SelectedIndex = ListBoxJoin.Items.Count - 1;
+                ListBoxJoin.Focus();
+            }
+            else
+            {
+                var item = ListBoxJoin.SelectedItem;
+                ListBoxJoin.Items.RemoveAt(selectedIndex);
+                ListBoxJoin.Items.Insert(selectedIndex + direction, item);
+                ListBoxJoin.SelectedIndex = selectedIndex + direction;
+                ListBoxJoin.Focus();
+            }
         }
     }
 }
