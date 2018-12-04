@@ -43,6 +43,7 @@
                         <Label>Destination Folder</Label>
                         <TextBox x:Name="TextBoxOutputPath" Width="155" Margin="5" IsReadOnly="True"/>
                         <Button x:Name="OpenDestinationFolderButton" Margin="5" Click="OpenDestinationFolderButton_Click">Open Folder</Button>
+                        <Button x:Name="ButtonJoinAll" Click="ButtonJoinAll_Click">Join All</Button>
                     </WrapPanel>
 
                     <DockPanel x:Name="ItemsStackPanel" Grid.Column="2" Grid.RowSpan="2" Margin="20, 0, 20, 20">

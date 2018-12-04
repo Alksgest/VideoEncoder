@@ -1,12 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.IO;
-using System.Threading;
 using System.Text.RegularExpressions;
+using System.Collections.Generic;
 
 namespace FFMpegWrapper
 {
@@ -30,10 +27,75 @@ namespace FFMpegWrapper
 
         public FFMpegWorker() { }
 
-      
-        public Task<bool> EncodeAsync(MediaRecords mediaRecords)
+
+        public Task<bool> JoinVideosAsync(List<MediaRecords> files)
         {
             return Task.Run(() =>
+            {
+                return JoinVideosHelper(files);
+            });
+        }
+
+        private bool JoinVideosHelper(List<MediaRecords> files)
+        {
+
+            if (files == null)
+                return false;
+
+            string args = "-y ";
+            foreach (var file in files)
+            {
+                args += "-i " + file.InPath + " ";
+            }
+            args += "-filter_complex" + " " + $"\"[0:0] [0:1] [1:0] [1:1] concat=n={files.Count}:v=1:a=1 [v] [a]\"" + " " + "-map" + " " + "\"[v]\"" + " " + "-map" + " " + "\"[a]\"";
+            args += " " + @"D:\ffmpeg_test\xxx\joined_videos.mp4";
+
+            ProcessStartInfo info = SetupInfo(args);
+
+
+            using (CurrentProcess = Process.Start(info))
+            {
+                CurrentProcess.WaitForExit();
+
+                if (CurrentProcess.ExitCode == 0)
+                    return true;
+            }
+            return false;
+        }
+
+
+        private async Task<List<MediaRecords>> GetFilesForJoinAsync(List<MediaRecords> files, MediaRecords currentRecords)
+        {
+            bool isEqual = true;
+            List<MediaRecords> outList = new List<MediaRecords>();
+            foreach(var file in files)
+            {
+                isEqual = file.Equals(currentRecords);
+                if (isEqual)
+                    outList.Add(file);
+                else
+                {
+                    MediaRecords tmp = currentRecords;
+                    tmp.OutPath = file.OutPath;
+                    tmp.InPath = file.InPath;
+                    bool res = await EncodeAsync(tmp);
+                    tmp.InPath = tmp.OutPath;
+                    if (res)
+                    {
+                        outList.Add(tmp);
+                    }
+                    else
+                        return null;
+                }
+            }
+            return outList;
+        }
+
+
+
+        public Task<bool> EncodeAsync(MediaRecords mediaRecords)
+        {
+            return Task.Run(async () =>
             {
                 ProcessStartInfo info = SetupInfo(GetArgs(mediaRecords));
 
@@ -41,14 +103,11 @@ namespace FFMpegWrapper
                 {
                     CurrentProcess.WaitForExit();
 
-                    int code = CurrentProcess.ExitCode;
-
-                    if (code == 0)
+                    if (CurrentProcess.ExitCode == 0)
                     {
-                        //await LogOutputAsync(process.StandardOutput);
+                        //await LogOutputAsync(CurrentProcess.StandardOutput);
                         return true;
                     }
-
                    // await LogOutputAsync(process.StandardError);
                     return false;
                 }
@@ -155,6 +214,19 @@ namespace FFMpegWrapper
             }
             return 0;
         }
+
+        public static String GetNameOfFile(FileInfo info)
+        {
+            var name = info.Name;
+            var splitedName = name.Split('.');
+            string result = "";
+            for (int i = 0; i < splitedName.Length - 1; ++i)
+            {
+                result += splitedName[i];
+            }
+            return result;
+        }
+
 
         //public bool CloseFFMpeg()
         //{

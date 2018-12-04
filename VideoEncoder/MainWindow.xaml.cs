@@ -1,17 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using FFMpegWrapper;
 using Microsoft.Win32;
 using System.IO;
@@ -227,7 +219,7 @@ namespace VideoEncoder
             FileInfo info = new FileInfo(path);
             return new MediaRecords(
                 path,
-                TextBoxOutputPath.Text + @"\" + GetNameOfFile(info) + "_encoded." + info.Extension,
+                TextBoxOutputPath.Text + @"\" + FFMpegWorker.GetNameOfFile(info) + "_encoded." + info.Extension,
                 Defines.BitrateDictionary[BitrateComboBox.Text],
                 Byte.Parse(FramerateСomboBox.Text.ToString()),
                 UInt32.Parse(WidthTextBox.Text),
@@ -249,17 +241,7 @@ namespace VideoEncoder
                         System.Windows.Threading.DispatcherPriority.Background);
             });
         }
-        private String GetNameOfFile(FileInfo info)
-        {
-            var name = info.Name;
-            var splitedName = name.Split('.');
-            string result = "";
-            for (int i = 0; i < splitedName.Length - 1; ++i)
-            {
-                result += splitedName[i];
-            }
-            return result;
-        }
+
         private async Task EncodeVideosAsync()
         {
             if (!IsNewSession || MainListView.Items.Count == 0)
@@ -344,6 +326,19 @@ namespace VideoEncoder
                     PreviewListView.Items.Add(new VideoRepresenter(file));
                 }
             }
+        }
+
+        private async void ButtonJoinAll_Click(object sender, RoutedEventArgs e)
+        {
+            if (MainListView.Items.Count == 0)
+                return;
+
+            var mediaRecordsList = new List<MediaRecords>();
+
+            foreach(VideoRepresenter videos in MainListView.Items)
+                mediaRecordsList.Add(GetRecords(videos.FullPath));
+
+            bool result = await FFMpegWorker.JoinVideosAsync(mediaRecordsList);
         }
     }
 }

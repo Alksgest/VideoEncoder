@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Reflection;
 
 namespace FFMpegWrapper
 {
@@ -36,6 +37,7 @@ namespace FFMpegWrapper
         public string DAR { get; set; }
         public byte Chanels { get; set; }
         public uint Samplerate { get; set; }
+
         public MediaRecords(string inPath, string outPath, uint bitrate, byte framerate, uint width, uint height, byte chanels, uint samplerate)
         {
             InPath = inPath;
@@ -80,6 +82,35 @@ namespace FFMpegWrapper
         private void ValidateRecords()
         {
             //throw new NotImplementedException();
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj is MediaRecords records &&
+                   InPath == records.InPath &&
+                   OutPath == records.OutPath &&
+                   Bitrate == records.Bitrate &&
+                   Framerate == records.Framerate &&
+                   Width == records.Width &&
+                   Height == records.Height &&
+                   DAR == records.DAR &&
+                   Chanels == records.Chanels &&
+                   Samplerate == records.Samplerate;
+        }
+
+        public override int GetHashCode()
+        {
+            var hashCode = -1822011962;
+            hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(InPath);
+            hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(OutPath);
+            hashCode = hashCode * -1521134295 + Bitrate.GetHashCode();
+            hashCode = hashCode * -1521134295 + Framerate.GetHashCode();
+            hashCode = hashCode * -1521134295 + Width.GetHashCode();
+            hashCode = hashCode * -1521134295 + Height.GetHashCode();
+            hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(DAR);
+            hashCode = hashCode * -1521134295 + Chanels.GetHashCode();
+            hashCode = hashCode * -1521134295 + Samplerate.GetHashCode();
+            return hashCode;
         }
     }
 }
