@@ -14,6 +14,7 @@ namespace VideoEncoder
 
         public string Title { get; }
         public string FullPath { get; }
+        public string Extension { get; }
         public long Length { get; }
         public int Duration { get; }
         public string StringLength { get; }
@@ -24,6 +25,7 @@ namespace VideoEncoder
         {
             worker = new FFMpegWorker();
             FileInfo info = new FileInfo(fullPath);
+            Extension = info.Extension;
             Title = info.Name;
             FullPath = info.FullName;
             Length = info.Length;

@@ -41,7 +41,7 @@
                         <Label Content="Samplerate" Width="70"/>
                         <ComboBox x:Name="SamplerateComboBox" Width="90"  Height="20" SelectedIndex="0"/>
 
-                        <Label>Destination Folder</Label>
+                        <Label>Output Folder</Label>
                         <TextBox x:Name="TextBoxOutputPath" Width="155" Margin="5" IsReadOnly="True"/>
                         <Button x:Name="OpenDestinationFolderButton" Margin="5" Click="OpenDestinationFolderButton_Click">Open Folder</Button>
 
@@ -73,7 +73,7 @@
                             <Button Content="Encode" Width="105" Margin="5" Click="ButtonEncodeVideosAsyncClicked"/>
                         </StackPanel>
                         <Separator Height="15" Visibility="Hidden"/>
-                        <ProgressBar x:Name="UploadProgressBar" Height="20"/>
+                        <ProgressBar x:Name="EncodeProgressBar" Height="20"/>
                     </StackPanel>
                 </Grid>
             </TabItem>
@@ -144,6 +144,9 @@
 
                     <ListBox x:Name="ListBoxJoin" ScrollViewer.HorizontalScrollBarVisibility="Disabled" 
                         Grid.Row="0" Grid.Column="0" Grid.RowSpan="2" Margin="5"
+                             DragOver ="ListBoxJoin_DragOver"
+                             Drop="ListBoxJoin_Drop"
+                             SelectionMode="Multiple"
                              >
                         <ListBox.ItemTemplate>
                             <DataTemplate>
@@ -163,8 +166,9 @@
                     
                     <StackPanel Grid.Column="0" Grid.Row="2" Margin="5" Orientation="Horizontal">
                         <GridSplitter Width="20" Visibility="Hidden"/>
-                        <Button x:Name="ButtonMoveFront" Content="Move front selected" Width="160" Margin="5" Height="30" Click="ButtonMoveFront_Click"/>
                         <Button x:Name="ButtonMoveBack" Content="Move back selected" Width="160" Margin="5" Height="30" Click="ButtonMoveBack_Click"/>
+                        <Button x:Name="ButtonMoveFront" Content="Move front selected" Width="160" Margin="5" Height="30" Click="ButtonMoveFront_Click"/>
+                        
 
                     </StackPanel>
 
@@ -172,15 +176,25 @@
                         <Label DockPanel.Dock="Top">Settings</Label>
                         <WrapPanel Margin="10" >
                             <WrapPanel Orientation="Horizontal" Margin="5">
-                                <CheckBox Content="Encode all files"/>
-                                <Button x:Name="ButtonJoin" Content="Join" Width="100" Click="ButtonJoin_Click" Margin="5"/>
-                                <ComboBox x:Name="ComboBoxJoinState" Margin="5" Width="100"/>
+                                <CheckBox x:Name="EncodeBeforJoinCheckBox" Content="Encode all files before joining" Margin="5"/>
+                                <WrapPanel Orientation="Vertical">
+                                    <TextBlock Text="Joining state" Margin="5"/>
+                                    <WrapPanel>
+                                        <ComboBox x:Name="ComboBoxJoinState" Width="100" Margin="5"/>
+                                        <Button x:Name="ButtonJoin" Content="Join" Width="100" Click="ButtonJoin_Click" Margin="5"/>
+                                    </WrapPanel>
 
+                                </WrapPanel>
+                                <ProgressBar x:Name="JoinProgressBar" Height="20" Width="318" Margin="5"/>
                             </WrapPanel>
+
+                            <TextBlock Text="Ouput Folder" Margin="10, 0, 0, 0"/>
+                            
                             <WrapPanel Orientation="Horizontal" Margin="5">
                                 <TextBox x:Name="TextBoxOutputJoinPath" Width="200" Margin="5" IsReadOnly="True"/>
                                 <Button Content="OpenFolder" Width="100" Margin="5" Click="ButtonOpenDestinationFolder_Click"/>
                             </WrapPanel>
+
                         </WrapPanel>
                     </DockPanel>
                 </Grid>

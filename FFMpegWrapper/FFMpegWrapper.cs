@@ -10,6 +10,7 @@ namespace FFMpegWrapper
 {
     public class FFMpegWorker
     {
+        private readonly object LockObject = new object();
         /*
             {0} - path to "in" file
             {1} - path to "out" file
@@ -53,59 +54,64 @@ namespace FFMpegWrapper
 
         public string GetFrame(string path)
         {
-            string fileName = GetNameOfFile(new FileInfo(path));
-            string filePathForFFMpeg = "\"" + FramesPath + fileName + "_first_frame" + ".jpg" + "\"";
-            string filePath = FramesPath + fileName + "_first_frame" + ".jpg";
-            string args = String.Format(GetFrameFormat, path, filePathForFFMpeg);
-
-            int exitCode = -1;
-            using (CurrentProcess = Process.Start(SetupInfo(args)))
+            lock (LockObject)
             {
-                CurrentProcess.WaitForExit();
-                exitCode = CurrentProcess.ExitCode;
-            }
+                string fileName = GetNameOfFile(new FileInfo(path));
+                string filePathForFFMpeg = "\"" + FramesPath + fileName + "_first_frame" + ".jpg" + "\"";
+                string filePath = FramesPath + fileName + "_first_frame" + ".jpg";
+                string args = String.Format(GetFrameFormat, path, filePathForFFMpeg);
 
-            if (exitCode == 0)
-            {
-                return filePath;
+                int exitCode = -1;
+                using (CurrentProcess = Process.Start(SetupInfo(args)))
+                {
+                    CurrentProcess.WaitForExit();
+                    exitCode = CurrentProcess.ExitCode;
+                }
+
+                if (exitCode == 0)
+                {
+                    return filePath;
+                }
+                else
+                    return null;
             }
-            else
-                return null;
         }
 
         private bool JoinVideosHelper(List<MediaRecords> files, string outFile)
         {
+            lock (LockObject)
+            {
+                if (files == null)
+                    return false;
 
-            if (files == null)
+                string args = "-y ";
+                foreach (var file in files)
+                {
+                    args += "-i " + "\"" + file.InPath + "\"" + " ";
+                }
+                args += "-filter_complex" + " " + $"\"[0:0] [0:1] [1:0] [1:1] concat=n={files.Count}:v=1:a=1 [v] [a]\"" + " " + "-map" + " " + "\"[v]\"" + " " + "-map" + " " + "\"[a]\"";
+                args += " " + outFile;
+
+                ProcessStartInfo info = SetupInfo(args);
+
+
+                using (CurrentProcess = Process.Start(info))
+                {
+                    CurrentProcess.WaitForExit();
+
+                    if (CurrentProcess.ExitCode == 0)
+                        return true;
+                }
                 return false;
-
-            string args = "-y ";
-            foreach (var file in files)
-            {
-                args += "-i " + "\"" + file.InPath + "\"" + " ";
             }
-            args += "-filter_complex" + " " + $"\"[0:0] [0:1] [1:0] [1:1] concat=n={files.Count}:v=1:a=1 [v] [a]\"" + " " + "-map" + " " + "\"[v]\"" + " " + "-map" + " " + "\"[a]\"";
-            args += " " + outFile;
-
-            ProcessStartInfo info = SetupInfo(args);
-
-
-            using (CurrentProcess = Process.Start(info))
-            {
-                CurrentProcess.WaitForExit();
-
-                if (CurrentProcess.ExitCode == 0)
-                    return true;
-            }
-            return false;
         }
 
 
         private async Task<List<MediaRecords>> GetFilesForJoinAsync(List<MediaRecords> files, MediaRecords currentRecords)
         {
-            bool isEqual = true;
-            List<MediaRecords> outList = new List<MediaRecords>();
-            foreach(var file in files)
+                bool isEqual = true;
+                List<MediaRecords> outList = new List<MediaRecords>();
+            foreach (var file in files)
             {
                 isEqual = file.Equals(currentRecords);
                 if (isEqual)
@@ -125,51 +131,54 @@ namespace FFMpegWrapper
                         return null;
                 }
             }
-            return outList;
+                return outList;        
         }
 
 
 
         public Task<bool> EncodeAsync(MediaRecords mediaRecords)
         {
-            return Task.Run(async () =>
-            {
-                ProcessStartInfo info = SetupInfo(GetArgs(mediaRecords));
-
-                using (CurrentProcess = Process.Start(info))
+            return Task.Run(async () =>           
                 {
-                    CurrentProcess.WaitForExit();
+                    ProcessStartInfo info = SetupInfo(GetArgs(mediaRecords));
 
-                    if (CurrentProcess.ExitCode == 0)
+                    using (CurrentProcess = Process.Start(info))
                     {
-                        //await LogOutputAsync(CurrentProcess.StandardOutput);
-                        return true;
-                    }
-                   // await LogOutputAsync(process.StandardError);
-                    return false;
-                }
+                        CurrentProcess.WaitForExit();
+
+                        if (CurrentProcess.ExitCode == 0)
+                        {
+                            //await LogOutputAsync(CurrentProcess.StandardOutput);
+                            return true;
+                        }
+                        // await LogOutputAsync(process.StandardError);
+                        return false;
+                    }               
             });
         }
         // Encode video async with current media records
         public bool Encode(MediaRecords mediaRecords)
         {
-            ProcessStartInfo info = SetupInfo(GetArgs(mediaRecords));
-
-            using (CurrentProcess = Process.Start(info))
+            lock (LockObject)
             {
-                CurrentProcess.EnableRaisingEvents = true;
-                CurrentProcess.WaitForExit();
+                ProcessStartInfo info = SetupInfo(GetArgs(mediaRecords));
 
-                int code = CurrentProcess.ExitCode;
-
-                if (code == 0)
+                using (CurrentProcess = Process.Start(info))
                 {
-                    //LogOutput(process.StandardOutput);
-                    return true;
-                }
+                    CurrentProcess.EnableRaisingEvents = true;
+                    CurrentProcess.WaitForExit();
 
-                //LogOutput(process.StandardError);
-                return false;
+                    int code = CurrentProcess.ExitCode;
+
+                    if (code == 0)
+                    {
+                        //LogOutput(process.StandardOutput);
+                        return true;
+                    }
+
+                    //LogOutput(process.StandardError);
+                    return false;
+                }
             }
         }
         //Encode video async with current media records
@@ -224,32 +233,35 @@ namespace FFMpegWrapper
 
         public int GetVideoLength(string fullPath)
         {
-            Regex regex = new Regex("Duration: (\\d{2}):(\\d{2}):(\\d{2})");
-
-            ProcessStartInfo info = SetupInfo($"-i {fullPath}", true); //-hide_banner - loglevel info
-
-            string data;
-
-            using (GetInfoProcess = Process.Start(info))
+            lock (LockObject)
             {
-                GetInfoProcess.WaitForExit();
-                using (var stream = GetInfoProcess.StandardError)
-                {
-                    data = stream.ReadToEnd();
-                }
-                if(regex.Match(data).Value.Length > 0)
-                {
-                    string str = regex.Match(data).Value;
-                    var splitedStr = str.Split(':');
+                Regex regex = new Regex("Duration: (\\d{2}):(\\d{2}):(\\d{2})");
 
-                    int hr = Int32.Parse(splitedStr[1]);
-                    int min = Int32.Parse(splitedStr[2]);
-                    int sec = Int32.Parse(splitedStr[3]);
+                ProcessStartInfo info = SetupInfo($"-i {fullPath}", true); //-hide_banner - loglevel info
 
-                    return hr * 60 * 60 + min * 60 + sec;
+                string data;
+
+                using (GetInfoProcess = Process.Start(info))
+                {
+                    GetInfoProcess.WaitForExit();
+                    using (var stream = GetInfoProcess.StandardError)
+                    {
+                        data = stream.ReadToEnd();
+                    }
+                    if (regex.Match(data).Value.Length > 0)
+                    {
+                        string str = regex.Match(data).Value;
+                        var splitedStr = str.Split(':');
+
+                        int hr = Int32.Parse(splitedStr[1]);
+                        int min = Int32.Parse(splitedStr[2]);
+                        int sec = Int32.Parse(splitedStr[3]);
+
+                        return hr * 60 * 60 + min * 60 + sec;
+                    }
                 }
+                return 0;
             }
-            return 0;
         }
 
         public static String GetNameOfFile(FileInfo info)

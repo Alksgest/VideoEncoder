@@ -14,9 +14,12 @@ namespace VideoEncoder
 
     public partial class MainWindow : Window
     {
+        private const string FormatFilter =
+            "Files (*.mp3; *.wav; *.wma; *.flac; *.ogg; *.m4a; *.mp4; *.avi; *.wmv; *.mov; *.mkv; *.3gp) |" +
+            "*.mp3;*.wav;*.wma;*.flac;*.ogg;*.m4a;*.mp4;*.avi; *.wmv; *.mov; *.mkv; *.3gp";
+
         private FFMpegWorker FFMpegWorker = new FFMpegWorker();
         private List<string> VideosList = new List<string>();
-        private MediaRecords Records;
         DispatcherTimer Timer;
         PlayerState State = PlayerState.Stop;
 
@@ -26,6 +29,12 @@ namespace VideoEncoder
             Pause = 1,
             Stop = 2
         }
+        enum JoinState
+        {
+            JoinAll = 0,
+            JoinSelected = 1,
+        }
+        List<string> JoinStateList = new List<string> { "Join all", "Join selected" };
 
         private bool IsNewSession = true;
 
@@ -74,7 +83,19 @@ namespace VideoEncoder
 
         private void ButtonOpenFilesClick(object sender, RoutedEventArgs e) => OpenFilesAsync();
 
-        private async void ButtonEncodeVideosAsyncClicked(object sender, RoutedEventArgs e) => await EncodeVideosAsync();
+        private async void ButtonEncodeVideosAsyncClicked(object sender, RoutedEventArgs e)
+        {
+            List<MediaRecords> list = new List<MediaRecords>();
+
+            if (MainListView.SelectedIndex == -1)
+                foreach (VideoRepresenter item in MainListView.Items)
+                    list.Add(GetRecords(item.FullPath));
+            else
+                foreach (VideoRepresenter item in MainListView.SelectedItems)
+                    list.Add(GetRecords(item.FullPath));
+
+            await EncodeVideosAsync(list);
+        }
 
         private void OpenDestinationFolderButton_Click(object sender, RoutedEventArgs e) => OpenDestinationFolder(TextBoxOutputPath);
 
@@ -115,7 +136,6 @@ namespace VideoEncoder
 
             if (this.PreviewListView.SelectedIndex == -1 && PreviewMediaElement.Source == null)
                 PreviewListView.SelectedIndex = 0;
-
 
             switch (State)
             {
@@ -188,8 +208,10 @@ namespace VideoEncoder
             Properties.Settings.Default.BitrateIndex = BitrateComboBox.SelectedIndex;
             Properties.Settings.Default.FramerateIndex = FramerateСomboBox.SelectedIndex;
             Properties.Settings.Default.SamplerateIndex = SamplerateComboBox.SelectedIndex;
+            Properties.Settings.Default.JoinStateIndex = ComboBoxJoinState.SelectedIndex;
 
             Properties.Settings.Default.OutputPath = TextBoxOutputPath.Text;
+            Properties.Settings.Default.OutputJoinPath = TextBoxOutputJoinPath.Text;
 
             Properties.Settings.Default.Save();
         }
@@ -203,7 +225,9 @@ namespace VideoEncoder
             BitrateComboBox.SelectedIndex = Properties.Settings.Default.BitrateIndex;
             FramerateСomboBox.SelectedIndex = Properties.Settings.Default.FramerateIndex;
             SamplerateComboBox.SelectedIndex = Properties.Settings.Default.SamplerateIndex;
+            ComboBoxJoinState.SelectedIndex = Properties.Settings.Default.JoinStateIndex;
 
+            TextBoxOutputJoinPath.Text = Properties.Settings.Default.OutputJoinPath;
             TextBoxOutputPath.Text = Properties.Settings.Default.OutputPath;
         }
 
@@ -245,46 +269,30 @@ namespace VideoEncoder
             });
         }
 
-        private async Task EncodeVideosAsync()
+        private async Task EncodeVideosAsync(List<MediaRecords> records)
         {
-            if (!IsNewSession || MainListView.Items.Count == 0)
+            if (!IsNewSession || records.Count == 0)
                 return;
 
             IsNewSession = false;
             int counter = 0;
-            UploadProgressBar.Value = 0;
+            EncodeProgressBar.Value = 0;
 
-            if (MainListView.SelectedIndex == -1)
+            EncodeProgressBar.Maximum = records.Count;
+
+            foreach (var item in records)
             {
-                UploadProgressBar.Maximum = MainListView.Items.Count;
-                foreach (var item in MainListView.Items)
-                {
-                    Records = GetRecords((item as VideoRepresenter).FullPath);
-                    bool result = await FFMpegWorker.EncodeAsync(Records);
+                bool result = await FFMpegWorker.EncodeAsync(item);
 
-                    if (result)
-                        UploadProgressBarAsync(UploadProgressBar);
+                if (result)
+                    UploadProgressBarAsync(EncodeProgressBar);
 
-                    ++counter;
-                }
+                ++counter;
             }
-            else
-            {
-                UploadProgressBar.Maximum = MainListView.SelectedItems.Count;
-                foreach (var item in MainListView.SelectedItems)
-                {
-                    Records = GetRecords((item as VideoRepresenter).FullPath);
-                    bool result = await FFMpegWorker.EncodeAsync(Records);
 
-                    if (result)
-                        UploadProgressBarAsync(UploadProgressBar);
+            if (counter != records.Count) ; //todo 
 
-                    ++counter;
-                }
-            }
-            if (counter != MainListView.SelectedItems.Count) ; //todo 
-
-            UploadProgressBarAsync(UploadProgressBar, true);
+            UploadProgressBarAsync(EncodeProgressBar, true);
 
             IsNewSession = true;
         }
@@ -301,7 +309,15 @@ namespace VideoEncoder
             this.PreviewMediaElement.MediaEnded += PreviewMediaElement_MediaEnded;
 
             this.MainTabControl.SelectionChanged += MainTabControl_SelectionChanged;
+
+            this.ListBoxJoin.MouseLeftButtonDown += ListBoxJoin_MouseLeftButtonDown;
         }
+
+        private void ListBoxJoin_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            (sender as ListBox).SelectedIndex = -1;
+        }
+
         private void SetDataToContols()
         {
             foreach (var s in Defines.ChannelsDictionary.Keys)
@@ -312,12 +328,16 @@ namespace VideoEncoder
                 BitrateComboBox.Items.Add(s);
             foreach (var s in Defines.FramerateList)
                 FramerateСomboBox.Items.Add(s);
+            foreach (var s in JoinStateList)
+                ComboBoxJoinState.Items.Add(s);
         }
+
         private async void OpenFilesAsync()
         {
             OpenFileDialog dialog = new OpenFileDialog
             {
-                Multiselect = true
+                Multiselect = true,
+                Filter = FormatFilter
             };
 
             if (dialog.ShowDialog() == true)
@@ -346,18 +366,59 @@ namespace VideoEncoder
 
         private async void ButtonJoin_Click(object sender, RoutedEventArgs e)
         {
-            if (MainListView.Items.Count == 0)
-                return;
+            //JoinProgressBar
 
+            JoinState state = (JoinState)ComboBoxJoinState.SelectedIndex;
             var mediaRecordsList = new List<MediaRecords>();
-
-            foreach(VideoRepresenter videos in ListBoxJoin.Items)
-                mediaRecordsList.Add(GetRecords(videos.FullPath));
-
-            bool result = await FFMpegWorker.JoinVideosAsync(mediaRecordsList, TextBoxOutputJoinPath.Text + "\\joined.mp4");
+            switch (state)
+            {
+                case JoinState.JoinAll:
+                    {
+                        foreach (VideoRepresenter videos in ListBoxJoin.Items)
+                            mediaRecordsList.Add(GetRecords(videos.FullPath));
+                        JoinProgressBar.Maximum = mediaRecordsList.Count;
+                        await JoinVideos(mediaRecordsList);
+                    }
+                    break;
+                case JoinState.JoinSelected:
+                    {
+                        foreach (VideoRepresenter videos in ListBoxJoin.SelectedItems)
+                            mediaRecordsList.Add(GetRecords(videos.FullPath));
+                        JoinProgressBar.Maximum = mediaRecordsList.Count;
+                        await JoinVideos(mediaRecordsList);
+                    }
+                    break;
+                default:
+                    break;
+            }
+            UploadProgressBarAsync(JoinProgressBar, true);
         }
 
+        private async Task JoinVideos(List<MediaRecords> records)
+        {
+            if (MainListView.Items.Count == 0)
+                return;
+            List<MediaRecords> forJoin = records;
 
+            if (EncodeBeforJoinCheckBox.IsChecked.Value)
+            {
+                await EncodeVideosAsync(records);
+                forJoin = new List<MediaRecords>();
+                foreach (var item in records)
+                {
+                    var tmp = item;
+                    tmp.InPath = item.OutPath;
+                    forJoin.Add(tmp);
+                }
+            }
+
+            DateTime curentTime = DateTime.Now;
+            string outputName = "joined." + curentTime.ToString("yyyy_mm_dd_hh_MM_ss_") + (ListBoxJoin.Items[0] as VideoRepresenter).Extension;
+            bool result = await FFMpegWorker.JoinVideosAsync(forJoin, TextBoxOutputJoinPath.Text + "\\" + outputName);
+
+            if (result)
+                UploadProgressBarAsync(JoinProgressBar);
+        }
 
         private void SwapItem(int direction)
         {
@@ -394,5 +455,35 @@ namespace VideoEncoder
 
         private void ButtonOpenDestinationFolder_Click(object sender, RoutedEventArgs e) => OpenDestinationFolder(TextBoxOutputJoinPath);
 
+        private void ListBoxJoin_DragOver(object sender, DragEventArgs e)
+        {
+            return;
+            if(e.Data.GetDataPresent("Object"))
+            {
+                if(e.KeyStates == DragDropKeyStates.LeftMouseButton)
+                {
+                    e.Effects = DragDropEffects.Copy;
+                }
+                else
+                {
+                    e.Effects = DragDropEffects.Move;
+                }
+            }
+        }
+
+        private void ListBoxJoin_Drop(object sender, DragEventArgs e)
+        {
+            return;
+            if(!e.Handled)
+            {
+                ListBox box = sender as ListBox;
+                UIElement el = e.Data.GetData("Object") as UIElement;
+
+                if(box != null && el != null)
+                {
+
+                }
+            }
+        }
     }
 }
